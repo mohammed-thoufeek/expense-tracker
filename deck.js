@@ -48,15 +48,6 @@ function initDeck() {
   };
 
   let down = null;
-  let raf = 0, live = 0;
-
-  /* iOS fires pointermove at up to 120Hz — coalesce style writes to one per frame */
-  const scrub = raw => {
-    live = raw;
-    if (down) down.raw = raw;
-    if (!raf) raf = requestAnimationFrame(() => { raf = 0; apply(down ? down.raw : idx); });
-  };
-  const stopRaf = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
 
   deck.addEventListener("pointerdown", e => {
     if (e.target.closest("button") || e.target.closest(".month-amt")) return;
@@ -72,12 +63,12 @@ function initDeck() {
     let raw = down.base - dy / 130;            // scroll-like: one drag travels many cards
     if (raw < 0) raw *= 0.25;                  // rubber-band below the first card
     if (raw > n - 1) raw = (n - 1) + (raw - (n - 1)) * 0.25;
-    scrub(raw);
+    down.raw = raw;
+    apply(raw);
   });
 
   const up = e => {
     if (!down) return;
-    stopRaf();
     const dy = e.clientY - down.y;
     const d = down;
     down = null;
@@ -93,7 +84,7 @@ function initDeck() {
     settle();
   };
   deck.addEventListener("pointerup", up);
-  deck.addEventListener("pointercancel", () => { if (down) { stopRaf(); down = null; settle(); } });
+  deck.addEventListener("pointercancel", () => { if (down) { down = null; settle(); } });
   deck.addEventListener("contextmenu", e => e.preventDefault());
 
   /* mouse wheel scrubs the deck too — like a scrollbar */
