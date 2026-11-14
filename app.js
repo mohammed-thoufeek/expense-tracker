@@ -141,10 +141,11 @@ function oweRows() {
 }
 
 /* ---------- views ---------- */
-const eqChip = (label, value, num, key, action) => `
-  <div class="eq-chip">
-    <span class="lbl">${label}</span>
-    <span class="val"><strong class="val-n" data-num="${num}" data-key="${key}">${value}</strong>${action ? `<button class="ed" data-action="${action}" aria-label="Edit ${label}">${ICON.pencil}</button>` : ""}</span>
+const lgRow = (op, label, value, num, key, action = "", cls = "") => `
+  <div class="lg-row">
+    <span class="lg-op">${op}</span>
+    <span class="lg-lbl">${label}${action ? `<button class="lg-ed" data-action="${action}" aria-label="Edit ${label}">${ICON.pencil}</button>` : ""}</span>
+    <strong class="lg-amt ${cls}" data-num="${num}" data-key="${key}">${value}</strong>
   </div>`;
 
 function budgetBar() {
@@ -169,19 +170,15 @@ const VIEWS = {
       <header class="page-head"><h1>Dashboard</h1><p>Your money at a glance</p></header>
 
       <section class="panel">
-        <div class="eq-chips">
-          ${eqChip("Total", fmt(total), total, "total")}
-          <span class="eq-op">&minus;</span>
-          ${eqChip("Paid", fmt(paid), paid, "paid")}
-          <span class="eq-op">&minus;</span>
-          ${eqChip("Saved", fmt(saved), saved, "saved", "edit-saved")}
-          <span class="eq-op">&minus;</span>
-          ${eqChip("Pending", fmt(pending), pending, "pending")}
-        </div>
-        <div class="eq-result">
-          <span class="eq-op">=</span>
-          <div class="rem-pill ${rem < 0 ? "neg" : ""}">
-            <span>Remaining</span><strong data-num="${rem}" data-key="rem">${fmt(rem)}</strong>
+        <div class="ledger">
+          ${lgRow("", "Total", fmt(total), total, "total")}
+          ${lgRow("&minus;", "Paid", fmt(paid), paid, "paid", "", "c-green")}
+          ${lgRow("&minus;", "Saved", fmt(saved), saved, "saved", "edit-saved", "c-violet")}
+          ${lgRow("&minus;", "Pending", fmt(pending), pending, "pending", "", "c-amber")}
+          <div class="lg-total ${rem < 0 ? "neg" : ""}">
+            <span class="lg-op">=</span>
+            <span class="lg-lbl">Remaining</span>
+            <strong data-num="${rem}" data-key="rem">${fmt(rem)}</strong>
           </div>
         </div>
         ${budgetBar()}
@@ -247,7 +244,6 @@ const VIEWS = {
                 <button class="front-l4" data-action="l4-edit" data-id="${c.id}" aria-label="Edit last 4 digits" title="Last 4 digits">${ICON.pencil}</button>
               </div>
               <div class="deck-face deck-back" data-art="${c.art || artFor(c.name)}">
-                <div class="db-fit">
                 <div class="db-top">
                   <div class="db-title">
                     <strong class="db-name">${esc(c.name)}</strong>
@@ -279,7 +275,6 @@ const VIEWS = {
                   <button class="db-btn" data-action="new-bill" data-id="${c.id}">${ICON.receipt} New bill</button>
                   <button class="db-btn" data-action="edit-card" data-id="${c.id}">${ICON.pencil} Edit</button>
                   <button class="db-btn db-danger" data-action="del-card" data-id="${c.id}">${ICON.trash} Delete</button>
-                </div>
                 </div>
               </div>
             </div>

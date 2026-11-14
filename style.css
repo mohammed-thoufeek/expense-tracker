@@ -76,32 +76,33 @@ svg{display:block}
 .btn-ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.25)}
 .btn-ghost:active{transform:scale(.97)}
 
-/* ---------- equation ---------- */
-.eq-chips{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
-.eq-chip{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);border-radius:14px;
-  padding:8px 11px;min-width:76px;transition:transform .25s,border-color .25s,box-shadow .25s;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-.eq-chip:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.5);box-shadow:0 8px 20px -10px rgba(139,92,246,.5)}
-.eq-chip .lbl{display:block;font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
-.eq-chip .val{display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:750;font-variant-numeric:tabular-nums}
-.eq-chip .val-n{font-variant-numeric:tabular-nums}
-.eq-chip .ed{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;color:#6f6f8a;transition:color .2s,transform .3s}
-.eq-chip .ed:hover{color:var(--cyan);transform:rotate(18deg) scale(1.15)}
-.eq-chip .ed .ic{width:12px;height:12px}
-.eq-op{color:#5e5e7a;font-weight:800;font-size:15px;padding:0 1px}
-.eq-result{display:flex;align-items:center;gap:10px;margin-top:14px}
-.eq-result .eq-op{font-size:22px}
-.rem-pill{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
-  border:1.5px solid transparent;border-radius:16px;padding:13px 16px;position:relative;
+/* ---------- dashboard ledger ---------- */
+.ledger{margin-top:2px}
+.lg-row{display:flex;align-items:center;gap:10px;padding:9px 2px}
+.lg-row + .lg-row{border-top:1px solid rgba(255,255,255,.05)}
+.lg-op{width:18px;flex:none;text-align:center;color:#5e5e7a;font-weight:800;font-size:15px}
+.lg-lbl{flex:1;display:flex;align-items:center;gap:6px;min-width:0;
+  font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.lg-ed{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;color:#6f6f8a;transition:color .2s,transform .3s}
+.lg-ed:hover{color:var(--cyan);transform:rotate(18deg) scale(1.15)}
+.lg-ed:active{transform:scale(.88)}
+.lg-ed .ic{width:12px;height:12px}
+.lg-amt{font-size:15.5px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.2px;white-space:nowrap}
+.lg-amt.c-green{color:#34d399}
+.lg-amt.c-violet{color:#a78bfa}
+.lg-amt.c-amber{color:#fbbf24}
+.lg-total{display:flex;align-items:center;gap:10px;margin-top:12px;border-radius:16px;padding:12px 14px;
+  border:1.5px solid transparent;position:relative;
   background:linear-gradient(180deg,#1a1530,#0f0c1a) padding-box,
              conic-gradient(from var(--ang),#8b5cf6,#22d3ee,#f472b6,#fbbf24,#8b5cf6) border-box;
   animation:angSpin 6s linear infinite;
   box-shadow:0 14px 34px -14px rgba(80,50,180,.55)}
 @keyframes angSpin{to{--ang:360deg}}
-.rem-pill span{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:#a9a3cd}
-.rem-pill strong{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px;
+.lg-total .lg-op{color:#a9a3cd}
+.lg-total .lg-lbl{color:#a9a3cd}
+.lg-total strong{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px;
   background:linear-gradient(120deg,#fde68a,#fbbf24 60%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent}
-.rem-pill.neg strong{background:linear-gradient(120deg,#fda4af,#fb7185);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lg-total.neg strong{background:linear-gradient(120deg,#fda4af,#fb7185);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ---------- budget bar ---------- */
 .budget-bar{display:flex;height:7px;border-radius:99px;overflow:hidden;margin-top:14px;
@@ -121,7 +122,7 @@ svg{display:block}
 .deck{position:relative;height:302px;margin:2px 0 0;perspective:1200px;touch-action:none;user-select:none;-webkit-user-select:none}
 .deck::after{content:"";position:absolute;left:50%;bottom:-2px;width:72%;height:64px;transform:translateX(-50%);
   background:radial-gradient(ellipse at center,rgba(139,92,246,.3),transparent 70%);filter:blur(12px);pointer-events:none;z-index:0}
-.deck-card{position:absolute;left:50%;top:50%;--cw:min(74vw,330px);width:var(--cw);aspect-ratio:1.586;
+.deck-card{position:absolute;left:50%;top:50%;width:min(74vw,330px);aspect-ratio:1.586;
   transform:translate(-50%,-50%);transform-style:preserve-3d;will-change:transform;cursor:grab}
 .deck-card:active{cursor:grabbing}
 .deck.settling .deck-card{transition:transform .58s cubic-bezier(.22,1.32,.32,1),opacity .45s ease}
@@ -129,7 +130,6 @@ svg{display:block}
   transition:transform .65s cubic-bezier(.3,1.22,.35,1)}
 .deck-card.flipped .deck-inner{transform:rotateY(180deg)}
 .deck-face{position:absolute;inset:0;border-radius:18px;overflow:hidden;
-  clip-path:inset(0 round 18px); /* WebKit won't reliably clip composited 3D faces — force it geometrically */
   backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .deck-front{background:#0c0a10;box-shadow:0 24px 55px -20px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.1)}
 .deck-front svg,.deck-front img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
@@ -143,57 +143,54 @@ svg{display:block}
 .front-l4:hover{color:#fff;background:rgba(10,8,14,.75);transform:scale(1.1)}
 .front-l4:active{transform:scale(.88)}
 .deck-shade{position:absolute;inset:0;border-radius:18px;background:#05030a;opacity:var(--dim,0);pointer-events:none;z-index:5}
-.deck-back{transform:rotateY(180deg);
+.deck-back{transform:rotateY(180deg);display:flex;flex-direction:column;
   background:
     radial-gradient(130% 100% at 88% -12%, var(--tint,rgba(139,92,246,.26)), transparent 62%),
     radial-gradient(120% 90% at -8% 108%, rgba(34,211,238,.09), transparent 55%),
     linear-gradient(168deg,#1e1834 0%,#141024 52%,#0e0b1a 100%);
-  border:1px solid rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.14);padding:min(12px,2.7vw) min(14px,3.15vw) min(10px,2.25vw);
   box-shadow:0 24px 55px -20px rgba(70,35,150,.55),inset 0 1px 0 rgba(255,255,255,.1)}
 .deck-back[data-art="slice"]{--tint:rgba(255,61,139,.3)}
 .deck-back[data-art="flipkart-axis"]{--tint:rgba(55,163,242,.26)}
 .deck-back[data-art="axis-neo"]{--tint:rgba(255,111,156,.24)}
 .deck-back[data-art="bms"]{--tint:rgba(226,43,43,.22)}
 .deck-back[data-art="generic"]{--tint:rgba(34,211,238,.24)}
-/* back face is designed at a fixed 330px card, then scaled to the actual card width
-   (tan(atan2(a,b)) = a/b as a unitless ratio — Safari 15.4+, Chrome 111+) */
-.db-fit{position:absolute;top:0;left:0;width:330px;height:208px;
-  display:flex;flex-direction:column;padding:12px 14px 10px;
-  transform-origin:0 0;transform:scale(calc(tan(atan2(var(--cw),330px))))}
-.db-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+/* back-face metrics scale with the card (74vw wide on phones, 330px cap) via min(px, vw) */
+.db-top{display:flex;align-items:flex-start;justify-content:space-between;gap:min(8px,1.8vw)}
 .db-title{display:flex;flex-direction:column;gap:1px;min-width:0}
-.db-name{font-size:13.5px;font-weight:800;letter-spacing:-.2px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.db-sub{font-size:8.5px;font-weight:700;letter-spacing:2px;color:var(--muted);font-variant-numeric:tabular-nums}
+.db-name{font-size:min(13.5px,3vw);font-weight:800;letter-spacing:-.2px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-sub{font-size:min(8.5px,1.9vw);font-weight:700;letter-spacing:min(2px,.45vw);color:var(--muted);font-variant-numeric:tabular-nums}
 .db-holo{width:26px;height:26px;border-radius:9px;color:#a78bfa}
 .db-holo .ic{width:14px;height:14px}
 .db-holo:hover{color:#c4b5fd}
-.db-mid{margin-top:4px}
-.db-lbl{display:block;font-size:9px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
-.db-amt{display:block;font-style:normal;font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px;
+.db-mid{margin-top:min(4px,.9vw)}
+.db-lbl{display:block;font-size:min(9px,2vw);font-weight:800;letter-spacing:min(1.4px,.31vw);text-transform:uppercase;color:var(--muted)}
+.db-amt{display:block;font-style:normal;font-size:min(25px,5.6vw);font-weight:800;letter-spacing:-.5px;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px;
   background:linear-gradient(120deg,#fef3c7,#fbbf24 55%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 3px 16px rgba(251,191,36,.25))}
-.deck-back .pay-pill{align-self:flex-start;margin-top:5px;padding:5px 12px;font-size:10.5px;gap:6px;
+.deck-back .pay-pill{align-self:flex-start;margin-top:min(5px,1.1vw);padding:min(5px,1.1vw) min(12px,2.7vw);font-size:min(10.5px,2.35vw);gap:min(6px,1.35vw);
   box-shadow:0 4px 16px -6px rgba(16,185,129,.55)}
 .deck-back .pay-pill:hover{transform:translateY(-1px)}
-.deck-back .paid-line,.deck-back .paid-state{align-self:flex-start;margin-top:5px}
+.deck-back .paid-line,.deck-back .paid-state{align-self:flex-start;margin-top:min(5px,1.1vw)}
 .deck-back .paid-line .undo-pill{margin-top:0}
-.db-up{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;
-  padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
-.db-up-l{display:flex;align-items:baseline;gap:7px;min-width:0}
-.db-up .m-lbl{font-size:8.5px;letter-spacing:1.2px}
-.db-up .month-amt{font-size:13.5px}
-.db-up-btns{display:flex;align-items:center;gap:5px;flex:none}
+.deck-back .paid-state{font-size:min(10.5px,2.35vw)}
+.db-up{display:flex;align-items:center;justify-content:space-between;gap:min(8px,1.8vw);margin-top:auto;
+  padding:min(6px,1.35vw) min(8px,1.8vw);border-radius:min(12px,2.7vw);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.db-up-l{display:flex;align-items:baseline;gap:min(7px,1.55vw);min-width:0}
+.db-up .m-lbl{font-size:min(8.5px,1.9vw);letter-spacing:min(1.2px,.27vw)}
+.db-up .month-amt{font-size:min(13.5px,3vw)}
+.db-up-btns{display:flex;align-items:center;gap:min(5px,1.1vw);flex:none}
 .db-up .month-add{width:22px;height:22px}
 .db-mini{width:22px;height:22px;border-radius:8px;flex:none;background:rgba(255,255,255,.06)}
 .db-mini .ic{width:12px;height:12px}
-.db-row{display:flex;gap:8px;margin-top:8px}
-.db-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:11px;
-  font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;line-height:1;color:#b9b9d2;
+.db-row{display:flex;gap:min(8px,1.8vw);margin-top:min(8px,1.8vw)}
+.db-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:min(5px,1.1vw);padding:min(7px,1.55vw) min(4px,.9vw);border-radius:min(11px,2.45vw);
+  font-size:min(10.5px,2.35vw);font-weight:800;letter-spacing:.6px;text-transform:uppercase;line-height:1;color:#b9b9d2;
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.11);cursor:pointer;
   transition:color .2s,background .2s,transform .15s,border-color .2s}
 .db-btn:hover{color:#fff;background:rgba(255,255,255,.11);transform:translateY(-1px)}
 .db-btn:active{transform:scale(.95)}
-.db-btn .ic{width:13px;height:13px;flex:none}
+.db-btn .ic{width:min(13px,2.9vw);height:min(13px,2.9vw);flex:none}
 .db-btn.db-danger{color:#fda4af;border-color:rgba(251,113,133,.28)}
 .db-btn.db-danger:hover{background:rgba(251,113,133,.12);color:#fb7185;transform:translateY(-1px)}
 .deck-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
