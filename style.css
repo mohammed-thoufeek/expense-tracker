@@ -26,7 +26,7 @@ svg{display:block}
 
 /* ---------- ambient orbs ---------- */
 .orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.orbs i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.32}
+.orbs i{position:absolute;border-radius:50%;filter:blur(64px);opacity:.32}
 .orbs i:nth-child(1){width:44vmax;height:44vmax;left:-12vmax;top:-16vmax;background:radial-gradient(circle,#6d28d9,transparent 65%);animation:orbDrift 26s ease-in-out infinite alternate}
 .orbs i:nth-child(2){width:38vmax;height:38vmax;right:-14vmax;bottom:-14vmax;background:radial-gradient(circle,#0e7490,transparent 65%);animation:orbDrift 32s ease-in-out infinite alternate-reverse}
 .orbs i:nth-child(3){width:26vmax;height:26vmax;left:55%;top:-18vmax;background:radial-gradient(circle,#9d174d,transparent 65%);animation:orbDrift 24s 2s ease-in-out infinite alternate}
@@ -120,8 +120,8 @@ svg{display:block}
 .deck-panel .panel-head{padding:0 16px;margin-bottom:2px}
 .deck{position:relative;height:302px;margin:2px 0 0;perspective:1200px;touch-action:none;user-select:none;-webkit-user-select:none}
 .deck::after{content:"";position:absolute;left:50%;bottom:-2px;width:72%;height:64px;transform:translateX(-50%);
-  background:radial-gradient(ellipse at center,rgba(139,92,246,.3),transparent 70%);filter:blur(16px);pointer-events:none;z-index:0}
-.deck-card{position:absolute;left:50%;top:50%;width:min(74vw,330px);aspect-ratio:1.586;
+  background:radial-gradient(ellipse at center,rgba(139,92,246,.3),transparent 70%);filter:blur(12px);pointer-events:none;z-index:0}
+.deck-card{position:absolute;left:50%;top:50%;--cw:min(74vw,330px);width:var(--cw);aspect-ratio:1.586;
   transform:translate(-50%,-50%);transform-style:preserve-3d;will-change:transform;cursor:grab}
 .deck-card:active{cursor:grabbing}
 .deck.settling .deck-card{transition:transform .58s cubic-bezier(.22,1.32,.32,1),opacity .45s ease}
@@ -129,6 +129,7 @@ svg{display:block}
   transition:transform .65s cubic-bezier(.3,1.22,.35,1)}
 .deck-card.flipped .deck-inner{transform:rotateY(180deg)}
 .deck-face{position:absolute;inset:0;border-radius:18px;overflow:hidden;
+  clip-path:inset(0 round 18px); /* WebKit won't reliably clip composited 3D faces — force it geometrically */
   backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .deck-front{background:#0c0a10;box-shadow:0 24px 55px -20px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.1)}
 .deck-front svg,.deck-front img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
@@ -142,37 +143,42 @@ svg{display:block}
 .front-l4:hover{color:#fff;background:rgba(10,8,14,.75);transform:scale(1.1)}
 .front-l4:active{transform:scale(.88)}
 .deck-shade{position:absolute;inset:0;border-radius:18px;background:#05030a;opacity:var(--dim,0);pointer-events:none;z-index:5}
-.deck-back{transform:rotateY(180deg);display:flex;flex-direction:column;
+.deck-back{transform:rotateY(180deg);
   background:
     radial-gradient(130% 100% at 88% -12%, var(--tint,rgba(139,92,246,.26)), transparent 62%),
     radial-gradient(120% 90% at -8% 108%, rgba(34,211,238,.09), transparent 55%),
     linear-gradient(168deg,#1e1834 0%,#141024 52%,#0e0b1a 100%);
-  border:1px solid rgba(255,255,255,.14);padding:14px 15px 12px;
+  border:1px solid rgba(255,255,255,.14);
   box-shadow:0 24px 55px -20px rgba(70,35,150,.55),inset 0 1px 0 rgba(255,255,255,.1)}
 .deck-back[data-art="slice"]{--tint:rgba(255,61,139,.3)}
 .deck-back[data-art="flipkart-axis"]{--tint:rgba(55,163,242,.26)}
 .deck-back[data-art="axis-neo"]{--tint:rgba(255,111,156,.24)}
 .deck-back[data-art="bms"]{--tint:rgba(226,43,43,.22)}
 .deck-back[data-art="generic"]{--tint:rgba(34,211,238,.24)}
+/* back face is designed at a fixed 330px card, then scaled to the actual card width
+   (tan(atan2(a,b)) = a/b as a unitless ratio — Safari 15.4+, Chrome 111+) */
+.db-fit{position:absolute;top:0;left:0;width:330px;height:208px;
+  display:flex;flex-direction:column;padding:12px 14px 10px;
+  transform-origin:0 0;transform:scale(calc(tan(atan2(var(--cw),330px))))}
 .db-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .db-title{display:flex;flex-direction:column;gap:1px;min-width:0}
-.db-name{font-size:14.5px;font-weight:800;letter-spacing:-.2px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-name{font-size:13.5px;font-weight:800;letter-spacing:-.2px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .db-sub{font-size:8.5px;font-weight:700;letter-spacing:2px;color:var(--muted);font-variant-numeric:tabular-nums}
 .db-holo{width:26px;height:26px;border-radius:9px;color:#a78bfa}
 .db-holo .ic{width:14px;height:14px}
 .db-holo:hover{color:#c4b5fd}
-.db-mid{margin-top:6px}
+.db-mid{margin-top:4px}
 .db-lbl{display:block;font-size:9px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
-.db-amt{display:block;font-style:normal;font-size:27px;font-weight:800;letter-spacing:-.5px;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px;
+.db-amt{display:block;font-style:normal;font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px;
   background:linear-gradient(120deg,#fef3c7,#fbbf24 55%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 3px 16px rgba(251,191,36,.25))}
-.deck-back .pay-pill{align-self:flex-start;margin-top:6px;padding:6px 13px;font-size:10.5px;gap:6px;
+.deck-back .pay-pill{align-self:flex-start;margin-top:5px;padding:5px 12px;font-size:10.5px;gap:6px;
   box-shadow:0 4px 16px -6px rgba(16,185,129,.55)}
 .deck-back .pay-pill:hover{transform:translateY(-1px)}
-.deck-back .paid-line,.deck-back .paid-state{align-self:flex-start;margin-top:7px}
+.deck-back .paid-line,.deck-back .paid-state{align-self:flex-start;margin-top:5px}
 .deck-back .paid-line .undo-pill{margin-top:0}
 .db-up{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;
-  padding:7px 9px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+  padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
 .db-up-l{display:flex;align-items:baseline;gap:7px;min-width:0}
 .db-up .m-lbl{font-size:8.5px;letter-spacing:1.2px}
 .db-up .month-amt{font-size:13.5px}
@@ -180,8 +186,8 @@ svg{display:block}
 .db-up .month-add{width:22px;height:22px}
 .db-mini{width:22px;height:22px;border-radius:8px;flex:none;background:rgba(255,255,255,.06)}
 .db-mini .ic{width:12px;height:12px}
-.db-row{display:flex;gap:8px;margin-top:9px}
-.db-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:11px;
+.db-row{display:flex;gap:8px;margin-top:8px}
+.db-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:11px;
   font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;line-height:1;color:#b9b9d2;
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.11);cursor:pointer;
   transition:color .2s,background .2s,transform .15s,border-color .2s}
@@ -314,7 +320,7 @@ svg{display:block}
 
 /* ---------- tabbar ---------- */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;
-  width:min(560px,calc(100% - 20px));background:rgba(13,13,24,.72);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  width:min(560px,calc(100% - 20px));background:rgba(13,13,24,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-radius:26px;padding:8px 6px 7px;
   box-shadow:0 16px 40px -10px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.07)}
 .tabbar::before{content:"";position:absolute;inset:-1px;border-radius:27px;padding:1px;pointer-events:none;

@@ -247,6 +247,7 @@ const VIEWS = {
                 <button class="front-l4" data-action="l4-edit" data-id="${c.id}" aria-label="Edit last 4 digits" title="Last 4 digits">${ICON.pencil}</button>
               </div>
               <div class="deck-face deck-back" data-art="${c.art || artFor(c.name)}">
+                <div class="db-fit">
                 <div class="db-top">
                   <div class="db-title">
                     <strong class="db-name">${esc(c.name)}</strong>
@@ -278,6 +279,7 @@ const VIEWS = {
                   <button class="db-btn" data-action="new-bill" data-id="${c.id}">${ICON.receipt} New bill</button>
                   <button class="db-btn" data-action="edit-card" data-id="${c.id}">${ICON.pencil} Edit</button>
                   <button class="db-btn db-danger" data-action="del-card" data-id="${c.id}">${ICON.trash} Delete</button>
+                </div>
                 </div>
               </div>
             </div>
