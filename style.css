@@ -13,8 +13,9 @@ body{
   background:#07070d;color:var(--ink);
   font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   font-size:15px;line-height:1.45;overflow-x:hidden;
+  overscroll-behavior-y:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;
 }
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;touch-action:manipulation}
 button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:8px}
 svg{display:block}
 .ic{width:18px;height:18px;flex:none}
@@ -33,7 +34,7 @@ svg{display:block}
 
 /* ---------- layout ---------- */
 .shell{max-width:560px;margin:0 auto;padding:0 14px;position:relative;z-index:1}
-.view{padding:22px 2px 132px;min-height:70vh}
+.view{padding:22px 2px calc(132px + env(safe-area-inset-bottom,0px));min-height:70vh}
 .page{will-change:transform}
 
 .page-head{margin:6px 2px 18px}
@@ -312,7 +313,7 @@ svg{display:block}
 .undo-pill .ic{width:10px;height:10px}
 
 /* ---------- tabbar ---------- */
-.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:20;
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;
   width:min(560px,calc(100% - 20px));background:rgba(13,13,24,.72);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   border-radius:26px;padding:8px 6px 7px;
   box-shadow:0 16px 40px -10px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.07)}
@@ -345,7 +346,7 @@ svg{display:block}
 @keyframes fieldUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .field>span{display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .field input,.field select{width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(255,255,255,.13);
-  font:inherit;font-size:14.5px;background:rgba(255,255,255,.05);color:var(--ink);transition:border-color .2s,box-shadow .2s}
+  font:inherit;font-size:16px;background:rgba(255,255,255,.05);color:var(--ink);transition:border-color .2s,box-shadow .2s}
 .field input::placeholder{color:#5d5d78}
 .field select option{color:#111;background:#fff}
 .field input:focus,.field select:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.25);background:rgba(255,255,255,.08)}
@@ -374,3 +375,22 @@ svg{display:block}
 .btn-danger:active{transform:scale(.97)}
 
 @media (min-width:640px){.view{padding-top:30px}}
+
+/* ---------- mobile / installed-app polish ---------- */
+/* in standalone (installed) mode the app draws under the status bar — clear the notch */
+@media (display-mode:standalone){
+  .view{padding-top:calc(22px + env(safe-area-inset-top,0px))}
+}
+/* touch devices: comfortable finger targets */
+@media (pointer:coarse){
+  .icon-btn{width:34px;height:34px;border-radius:10px}
+  .icon-btn .ic{width:16px;height:16px}
+  .db-mini,.db-up .month-add{width:26px;height:26px}
+  .db-mini .ic{width:13px;height:13px}
+  .undo-pill{padding:7px 14px}
+  .mini-add{padding:9px 14px}
+  .tab{padding:8px 2px 6px}
+  .modal-backdrop{padding:14px;align-items:end;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .modal{animation:slideUpIn .32s cubic-bezier(.2,1.1,.3,1)}
+  @keyframes slideUpIn{from{opacity:0;transform:translateY(26px) scale(.98)}to{opacity:1;transform:none}}
+}
