@@ -89,7 +89,6 @@ function spendRows(spends, { icons = false, plain = false } = {}) {
     <div class="row${flashCls(s.id)}" style="--i:${i}">
       <div class="row-main">
         <span class="row-name">${esc(s.name)}</span>
-        <span class="st-chip pending">Pending</span>
       </div>
       <strong class="amt">${fmt(s.amount)}</strong>
       ${icons ? `

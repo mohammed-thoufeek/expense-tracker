@@ -233,10 +233,6 @@ svg{display:block}
 .icon-btn:active{transform:scale(.88)}
 .icon-btn.danger:hover{color:var(--red);background:rgba(251,113,133,.12)}
 .icon-btn .ic{width:15px;height:15px}
-/* spend status badge — every spend is pending (static, not tappable) */
-.st-chip{flex:none;display:inline-flex;align-items:center;padding:2.5px 8px;border-radius:99px;
-  font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
-.st-chip.pending{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4)}
 .avatar{width:34px;height:34px;border-radius:50%;color:#fff;font-size:14px;font-weight:800;
   display:grid;place-items:center;flex:none;background:linear-gradient(135deg,#8b5cf6,#22d3ee);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.12),0 4px 12px -4px rgba(139,92,246,.6)}
