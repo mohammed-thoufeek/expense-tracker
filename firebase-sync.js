@@ -261,6 +261,7 @@ function adoptState(d) {
     if (typeof c.paidAmt !== "number") c.paidAmt = 0;
     if (!Array.isArray(c.monthItems)) c.monthItems = [];
   });
+  state.spends.forEach(sp => { sp.status = "pending"; });   // spends are always pending
   deckIndex = 0;
   deckFlipped = false;
   render();

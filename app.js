@@ -9,9 +9,9 @@ function seed() {
     total: 60000,
     saved: 12500,
     spends: [
-      { id: uid(), name: "Groceries - BigBasket", amount: 2450, status: "paid",    cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
-      { id: uid(), name: "Netflix subscription",  amount: 649,  status: "paid",    cardId: "",              created: Date.now() - 4 * 864e5 },
-      { id: uid(), name: "Petrol",                amount: 1500, status: "paid",    cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
+      { id: uid(), name: "Groceries - BigBasket", amount: 2450, status: "pending", cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
+      { id: uid(), name: "Netflix subscription",  amount: 649,  status: "pending", cardId: "",              created: Date.now() - 4 * 864e5 },
+      { id: uid(), name: "Petrol",                amount: 1500, status: "pending", cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
       { id: uid(), name: "Movie tickets - PVR",   amount: 720,  status: "pending", cardId: "card-bms",      created: Date.now() - 2 * 864e5 },
       { id: uid(), name: "Zomato order",          amount: 385,  status: "pending", cardId: "",              created: Date.now() - 864e5 },
     ],
@@ -39,6 +39,8 @@ function loadState() {
       if (typeof c.paidAmt !== "number") c.paidAmt = 0;
       if (!Array.isArray(c.monthItems)) c.monthItems = [];
     });
+    // every spend is pending — statuses are fixed, not editable
+    if (Array.isArray(s.spends)) s.spends.forEach(sp => { sp.status = "pending"; });
     return s;
   } catch { return seed(); }
 }
@@ -83,14 +85,11 @@ function undoCard(id) {
 function spendRows(spends, { icons = false, plain = false } = {}) {
   if (!spends.length) return `<div class="empty">No spends yet \u2014 add your first one</div>`;
   const sorted = [...spends].sort((a, b) => b.created - a.created);
-  const chip = s => s.status === "paid"
-    ? `<button class="st-chip paid" data-action="spend-status" data-id="${s.id}" aria-label="Mark as pending" title="Tap to mark as pending">${ICON.check} Paid</button>`
-    : `<button class="st-chip pending" data-action="spend-status" data-id="${s.id}" aria-label="Mark as paid" title="Tap to mark as paid">Pending</button>`;
   return sorted.map((s, i) => `
     <div class="row${flashCls(s.id)}" style="--i:${i}">
       <div class="row-main">
         <span class="row-name">${esc(s.name)}</span>
-        ${chip(s)}
+        <span class="st-chip pending">Pending</span>
       </div>
       <strong class="amt">${fmt(s.amount)}</strong>
       ${icons ? `
@@ -509,7 +508,7 @@ function formSpend(id) {
       flashId = editing.id;
       save(); render(); toast("Spend updated"); close();
     } else {
-      const s = { id: uid(), name: d.name.trim(), amount, status: "paid", cardId: "", created: Date.now() };
+      const s = { id: uid(), name: d.name.trim(), amount, status: "pending", cardId: "", created: Date.now() };
       state.spends.push(s);
       flashId = s.id;
       save(); render(); toast("Spend added"); close();
@@ -687,17 +686,6 @@ document.addEventListener("click", async e => {
     case "edit-saved": formSaved(); break;
     case "add-spend": formSpend(); break;
     case "edit-spend": formSpend(id); break;
-    case "spend-status": {
-      const s = state.spends.find(x => x.id === id);
-      if (!s) break;
-      const was = s.status;
-      s.status = was === "paid" ? "pending" : "paid";
-      flashId = s.id;
-      save(); render();
-      toast(`${s.name} marked as ${s.status}${s.status === "paid" ? " \u2713" : ""}`,
-        { label: "Undo", fn: () => { s.status = was; save(); render(); } });
-      break;
-    }
     case "del-spend": {
       const s = state.spends.find(x => x.id === id);
       if (await confirmDialog("Delete spend?", `\u201C${esc(s?.name || "This spend")}\u201D will be removed permanently.`)) {
