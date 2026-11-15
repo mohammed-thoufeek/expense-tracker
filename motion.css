@@ -151,3 +151,23 @@
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
 }
+
+/* =========================================================
+   TOUCH / iOS PERF
+   Animated blur filters and background-position animations make WebKit
+   re-rasterize layers every frame; these equivalents only move or rest
+   composited layers, so the hologram and ambient scene stay at 60fps.
+   ========================================================= */
+@media (pointer:coarse){
+  /* the spinning 70px-blurred conic glow becomes three static soft glows */
+  .holo-overlay::before{filter:none;animation:none;
+    background:radial-gradient(60% 48% at 28% 22%,rgba(255,61,139,.15),transparent 70%),
+               radial-gradient(55% 45% at 76% 72%,rgba(34,211,238,.13),transparent 70%),
+               radial-gradient(52% 42% at 62% 6%,rgba(123,47,247,.13),transparent 70%)}
+  /* grid floor stays static (dust + beam still give it life) */
+  .holo-grid{animation:none}
+  /* sheen stops tracking rotation and drops blur+hue-rotate filtering */
+  .holo-sheen{filter:none;animation:none}
+  /* scanlines shift via a composited transform instead of background-position */
+  .holo-lines{inset:-90px;background-position:0 0;transform:translateZ(3px) translate3d(0,var(--ly,0px),0)}
+}

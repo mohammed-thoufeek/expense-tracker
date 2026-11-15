@@ -59,9 +59,10 @@ function toast(msg, action) {
   setTimeout(dismiss, action ? 5500 : 2100);
 }
 
-/* ---------- 3D tilt on card thumbnails ---------- */
+/* ---------- 3D tilt on card thumbnails (mouse only — touch gets nothing from this,
+   and iOS synthesizes mousemove on taps which would thrash layout) ---------- */
 function setupTilts() {
-  if (reduceMotion) return;
+  if (reduceMotion || !matchMedia("(hover:hover) and (pointer:fine)").matches) return;
   document.querySelectorAll(".card-row .thumb").forEach(th => {
     th.onmousemove = e => {
       const r = th.getBoundingClientRect();

@@ -83,10 +83,14 @@ function undoCard(id) {
 function spendRows(spends, { icons = false, plain = false } = {}) {
   if (!spends.length) return `<div class="empty">No spends yet \u2014 add your first one</div>`;
   const sorted = [...spends].sort((a, b) => b.created - a.created);
+  const chip = s => s.status === "paid"
+    ? `<button class="st-chip paid" data-action="spend-status" data-id="${s.id}" aria-label="Mark as pending" title="Tap to mark as pending">${ICON.check} Paid</button>`
+    : `<button class="st-chip pending" data-action="spend-status" data-id="${s.id}" aria-label="Mark as paid" title="Tap to mark as paid">Pending</button>`;
   return sorted.map((s, i) => `
     <div class="row${flashCls(s.id)}" style="--i:${i}">
       <div class="row-main">
         <span class="row-name">${esc(s.name)}</span>
+        ${chip(s)}
       </div>
       <strong class="amt">${fmt(s.amount)}</strong>
       ${icons ? `
@@ -165,7 +169,8 @@ const VIEWS = {
   dashboard() {
     const total = cardTotalEver(), paid = cardPaidTotal();
     const { saved, pending } = sums();
-    const rem = total - paid - saved - pending;
+    const upcoming = monthTotalAll();
+    const rem = total - paid - upcoming - saved - pending;
     return `<div class="page">
       <header class="page-head"><h1>Dashboard</h1><p>Your money at a glance</p></header>
 
@@ -173,6 +178,7 @@ const VIEWS = {
         <div class="ledger">
           ${lgRow("", "Total", fmt(total), total, "total")}
           ${lgRow("&minus;", "Paid", fmt(paid), paid, "paid", "", "c-green")}
+          ${upcoming > 0 ? lgRow("&minus;", "Upcoming", fmt(upcoming), upcoming, "upcoming", "", "c-cyan") : ""}
           ${lgRow("&minus;", "Saved", fmt(saved), saved, "saved", "edit-saved", "c-violet")}
           ${lgRow("&minus;", "Pending", fmt(pending), pending, "pending", "", "c-amber")}
           <div class="lg-total ${rem < 0 ? "neg" : ""}">
@@ -182,7 +188,7 @@ const VIEWS = {
           </div>
         </div>
         ${budgetBar()}
-        <p class="note">Total &amp; Paid come from your cards &middot; Remaining = Total &minus; Paid &minus; Saved &minus; Pending. ${typeof dataNote === "function" ? dataNote() : "Data stays on this device."}</p>
+        <p class="note">Total &amp; Paid come from your cards &middot; Upcoming = swipes waiting for the next bill &middot; Remaining = Total &minus; Paid &minus; Upcoming &minus; Saved &minus; Pending. ${typeof dataNote === "function" ? dataNote() : "Data stays on this device."}</p>
       </section>
 
       <section class="panel">
@@ -322,6 +328,7 @@ function render(fresh = false) {
   runCountUps(view);
   setupTilts();
   if (tab === "cards") initDeck();
+  scheduleFacePrewarm();
   flashId = null;
   paidFlashId = null;
 }
@@ -338,6 +345,37 @@ function closeModal() {
   clearTimeout(modalCloseTimer);
   modalCloseTimer = setTimeout(() => { modalRoot.innerHTML = ""; }, 200);
 }
+
+/* ---------- iOS keyboard vs bottom sheets ---------- */
+/* Safari overlays the keyboard without resizing fixed elements, so on touch
+   devices (where sheets are bottom-anchored) the lower half of an open modal —
+   including its action buttons — stays behind the keyboard and taps land
+   nowhere. While an input inside a sheet is focused, lift it by the measured
+   keyboard overlap via the visual viewport. */
+(function keyboardLift() {
+  const vv = window.visualViewport;
+  if (!vv || !window.matchMedia("(pointer:coarse)").matches) return;
+  let bd = null;
+  const lift = () => {
+    if (!bd) return;
+    if (!bd.isConnected) { bd = null; vv.removeEventListener("resize", lift); return; }
+    const overlap = Math.round(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    if (overlap > 80) { bd.classList.add("kb"); bd.style.setProperty("--kb", overlap + "px"); }
+    else { bd.classList.remove("kb"); bd.style.removeProperty("--kb"); }
+  };
+  modalRoot.addEventListener("focusin", e => {
+    bd = e.target.closest(".modal-backdrop");
+    if (!bd) return;
+    lift();
+    vv.addEventListener("resize", lift);
+  });
+  modalRoot.addEventListener("focusout", () => setTimeout(() => {
+    if (!modalRoot.contains(document.activeElement)) {
+      vv.removeEventListener("resize", lift);
+      if (bd) { bd.classList.remove("kb"); bd.style.removeProperty("--kb"); bd = null; }
+    }
+  }, 120));
+})();
 
 function openForm(title, fields, submitLabel, cb, init = {}) {
   clearTimeout(modalCloseTimer);   // a pending close must not wipe the new modal
@@ -649,6 +687,17 @@ document.addEventListener("click", async e => {
     case "edit-saved": formSaved(); break;
     case "add-spend": formSpend(); break;
     case "edit-spend": formSpend(id); break;
+    case "spend-status": {
+      const s = state.spends.find(x => x.id === id);
+      if (!s) break;
+      const was = s.status;
+      s.status = was === "paid" ? "pending" : "paid";
+      flashId = s.id;
+      save(); render();
+      toast(`${s.name} marked as ${s.status}${s.status === "paid" ? " \u2713" : ""}`,
+        { label: "Undo", fn: () => { s.status = was; save(); render(); } });
+      break;
+    }
     case "del-spend": {
       const s = state.spends.find(x => x.id === id);
       if (await confirmDialog("Delete spend?", `\u201C${esc(s?.name || "This spend")}\u201D will be removed permanently.`)) {

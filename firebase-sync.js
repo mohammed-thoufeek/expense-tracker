@@ -3,7 +3,7 @@
    With FIREBASE_CONFIG = null the app runs exactly as before (local-only, no UI). */
 "use strict";
 
-window.__SYNC_BUILD = "exptracker-sync-2026-11-13b-always-push";
+window.__SYNC_BUILD = "exptracker-sync-2026-11-14a-ios-login";
 
 /* =====================================================================
    PASTE YOUR firebaseConfig HERE (Firebase console → Project settings →
@@ -123,9 +123,11 @@ function openLogin() {
         <p class="cloud-sub">One account, every device. This device keeps an offline copy too \u2014 everything merges into your account.</p>
         <form id="cloudForm">
           <label class="field"><span>Email</span>
-            <input name="email" type="email" required placeholder="you@example.com" autocomplete="email"></label>
+            <input name="email" type="email" required placeholder="you@example.com" autocomplete="email"
+              autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next"></label>
           <label class="field"><span>Password</span>
-            <input name="password" type="password" required minlength="6" placeholder="At least 6 characters" autocomplete="current-password"></label>
+            <input name="password" type="password" required minlength="6" placeholder="At least 6 characters" autocomplete="current-password"
+              autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done"></label>
           <div class="modal-actions">
             <button type="button" class="btn-ghost" data-cloud="create">Create account</button>
             <button type="submit" class="btn-primary">Sign in</button>
@@ -142,7 +144,9 @@ function openLogin() {
   });
 
   const form = document.getElementById("cloudForm");
-  const creds = () => ({ email: form.email.value.trim(), password: form.password.value });
+  // iOS: Keychain autofill and pastes can leave a phantom trailing space in
+  // either field — trim both so what gets submitted matches what's visible.
+  const creds = () => ({ email: form.email.value.trim(), password: form.password.value.trim() });
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -152,7 +156,11 @@ function openLogin() {
     try {
       await fbAuth.signInWithEmailAndPassword(email, password);
       closeModal(); toast("Signed in \u2014 syncing\u2026");
-    } catch (err) { toast(authErr(err)); setBusy(btn, false); }
+    } catch (err) {
+      toast(authErr(err)); setBusy(btn, false);
+      form.password.value = "";  // restart the next attempt clean — a half-edited masked field is easy to mis-type
+      form.password.focus();
+    }
   });
 
   bd.querySelector('[data-cloud="create"]').addEventListener("click", async () => {

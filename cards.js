@@ -210,8 +210,56 @@ function cardArtSVG(card) {
 </svg>`;
 }
 
-/* face = uploaded photo or generated art */
+/* face = uploaded photo or generated art.
+   Generated art is pre-rasterized to a bitmap once per card: iOS WebKit
+   rasterizes SVG Gaussian filters on the CPU and re-rasterizes while the
+   deck/holo transforms scale every frame — a plain <img> composites on the
+   GPU instead. */
+const FACE_PNG = new Map();   // faceKey → dataURL (JPEG, baked filters)
+const FACE_BUSY = new Set();  // keys currently being rasterized
+const faceKey = card =>
+  `${card.id}|${card.art || artFor(card.name)}|${card.name}|${card.last4 || ""}|${card.amount}`;
+
+function rasterFace(card) {
+  const key = faceKey(card);
+  if (FACE_PNG.has(key) || FACE_BUSY.has(key)) return;
+  FACE_BUSY.add(key);
+  const url = URL.createObjectURL(new Blob([cardArtSVG(card)], { type: "image/svg+xml" }));
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const c = document.createElement("canvas");
+      c.width = 680; c.height = 428;                     // 2× the 340×214 viewBox
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#0c0a10";                          // rounded-corner backdrop
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const png = c.toDataURL("image/jpeg", 0.92);
+      FACE_PNG.set(key, png);
+      /* upgrade any face already on screen (deck, thumbs, hologram) */
+      const sel = CSS.escape(key);
+      document.querySelectorAll(`[data-facekey="${sel}"]`).forEach(el => {
+        el.removeAttribute("data-facekey");
+        el.outerHTML = `<img src="${png}" alt="${esc(card.name)}" draggable="false" decoding="async">`;
+      });
+    } catch {} finally { URL.revokeObjectURL(url); FACE_BUSY.delete(key); }
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); FACE_BUSY.delete(key); };
+  img.src = url;
+}
+
+/* render every generated face once, just after a render settles */
+let prewarmT = null;
+function scheduleFacePrewarm() {
+  clearTimeout(prewarmT);
+  prewarmT = setTimeout(() => state.cards.forEach(c => { if (!c.img) rasterFace(c); }), 350);
+}
+
 function cardFaceHTML(card) {
-  if (card.img) return `<img src="${card.img}" alt="${esc(card.name)}" draggable="false">`;
-  return cardArtSVG(card);
+  if (card.img) return `<img src="${card.img}" alt="${esc(card.name)}" draggable="false" decoding="async">`;
+  const key = faceKey(card);
+  const png = FACE_PNG.get(key);
+  if (png) return `<img src="${png}" alt="${esc(card.name)}" draggable="false" decoding="async">`;
+  rasterFace(card);   // async — until then the crisp inline SVG shows, then swaps in place
+  return cardArtSVG(card).replace("<svg ", `<svg data-facekey="${esc(key)}" `);
 }

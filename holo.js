@@ -1,4 +1,7 @@
-/* holo.js — interactive 3D hologram card viewer (mouse + touch) with cinematic entrance */
+/* holo.js — interactive 3D hologram card viewer (mouse + touch) with cinematic entrance
+   Perf notes (iOS): the animation loop only runs while something is actually moving
+   (an always-on rAF loop burned CPU even when idle), rect reads are cached instead of
+   forced per pointermove, and all pointer work is coalesced into one apply per frame. */
 "use strict";
 
 let holoRAF = null;
@@ -37,28 +40,51 @@ function openHologram(card) {
   const cardEl = document.getElementById("holoCard");
   const sheen = root.querySelector(".holo-sheen");
   const lines = root.querySelector(".holo-lines");
+  const TOUCH = matchMedia("(pointer:coarse)").matches;
 
   /* --- physics state --- */
   let rx = -6, ry = 16;          // current rotation
   let trx = -6, try_ = 16;       // target rotation
   let dragging = false, lx = 0, ly = 0, vx = 0, vy = 0;
+  let rect = null, pe = null, closing = false, rafOn = false;
+  let lastSheen = "", lastLines = "", lastGx = "", lastGy = "";
 
-  const setGlare = e => {
-    const r = cardEl.getBoundingClientRect();
-    const x = clamp(((e.clientX - r.left) / r.width) * 100, -40, 140);
-    const y = clamp(((e.clientY - r.top) / r.height) * 100, -40, 140);
-    cardEl.style.setProperty("--gx", x + "%");
-    cardEl.style.setProperty("--gy", y + "%");
+  /* the card is in a fixed stage — cache its rect once per interaction
+     instead of forcing layout on every pointermove */
+  const cacheRect = () => { rect = cardEl.getBoundingClientRect(); };
+  cacheRect();
+
+  /* glare follows the pointer (change-gated, consumed once per frame) */
+  const setGlare = () => {
+    if (!rect || !pe) return;
+    const gx = clamp(((pe.x - rect.left) / rect.width) * 100, -40, 140).toFixed(0) + "%";
+    const gy = clamp(((pe.y - rect.top) / rect.height) * 100, -40, 140).toFixed(0) + "%";
+    pe = null;
+    if (gx !== lastGx) { lastGx = gx; cardEl.style.setProperty("--gx", gx); }
+    if (gy !== lastGy) { lastGy = gy; cardEl.style.setProperty("--gy", gy); }
   };
 
+  /* sheen/scanlines track the rotation. On touch the sheen stays static —
+     repainting a blurred, blend-mode gradient layer per frame is the
+     single heaviest thing in this view on iPhones. */
   const applyVars = () => {
-    sheen.style.setProperty("--shx", (50 + ry * 1.2) + "%");
-    sheen.style.setProperty("--shy", (50 - rx * 1.2) + "%");
-    lines.style.setProperty("--ly", (ry * 2.4) + "px");
+    if (!TOUCH) {
+      const s = (50 + ry * 1.2).toFixed(2) + "|" + (50 - rx * 1.2).toFixed(2);
+      if (s !== lastSheen) {
+        lastSheen = s;
+        sheen.style.setProperty("--shx", (50 + ry * 1.2).toFixed(2) + "%");
+        sheen.style.setProperty("--shy", (50 - rx * 1.2).toFixed(2) + "%");
+      }
+    }
+    const ly = (clamp(ry, -30, 30) * 2.4).toFixed(1) + "px";
+    if (ly !== lastLines) { lastLines = ly; lines.style.setProperty("--ly", ly); }
   };
 
+  /* runs only while something is moving; stops when the card settles */
   const loop = () => {
-    if (!document.getElementById("holoCard")) { holoRAF = null; return; }
+    rafOn = false;
+    if (closing || !cardEl.isConnected) { holoRAF = null; return; }
+    setGlare();
     if (!dragging) {                       // inertia after release
       try_ += vx; trx += vy; vx *= .95; vy *= .95;
       trx = clamp(trx, -72, 72);
@@ -67,45 +93,59 @@ function openHologram(card) {
     ry += (try_ - ry) * .12;
     cardEl.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
     applyVars();
-    holoRAF = requestAnimationFrame(loop);
+    const busy = dragging ||
+      Math.abs(trx - rx) > .05 || Math.abs(try_ - ry) > .05 ||
+      Math.abs(vx) > .005 || Math.abs(vy) > .005;
+    if (busy) { rafOn = true; holoRAF = requestAnimationFrame(loop); }
+    else {                                 // snap to the target and stop
+      rx = trx; ry = try_;
+      cardEl.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+      applyVars();
+      holoRAF = null;
+    }
   };
+  const kick = () => { if (!rafOn && !closing) { rafOn = true; holoRAF = requestAnimationFrame(loop); } };
 
   cardEl.addEventListener("pointerdown", e => {
     dragging = true; lx = e.clientX; ly = e.clientY; vx = vy = 0;
     cardEl.setPointerCapture(e.pointerId);
+    cacheRect();
+    pe = { x: e.clientX, y: e.clientY };
     if (navigator.vibrate) navigator.vibrate(8);
+    kick();
   });
 
   cardEl.addEventListener("pointermove", e => {
-    setGlare(e);
+    pe = { x: e.clientX, y: e.clientY };   // applied once per frame inside the loop
+    kick();
     if (dragging) {
       try_ += (e.clientX - lx) * .45;
       trx = clamp(trx - (e.clientY - ly) * .45, -72, 72);
       vx = (e.clientX - lx) * .03;
       vy = -(e.clientY - ly) * .03;
       lx = e.clientX; ly = e.clientY;
-    } else if (e.pointerType === "mouse") {  // tilt toward cursor
-      const r = cardEl.getBoundingClientRect();
-      const nx = (e.clientX - r.left) / r.width - .5;
-      const ny = (e.clientY - r.top) / r.height - .5;
+    } else if (!TOUCH && rect) {           // tilt toward cursor (mouse only)
+      const nx = (e.clientX - rect.left) / rect.width - .5;
+      const ny = (e.clientY - rect.top) / rect.height - .5;
       trx = -ny * 22; try_ = 16 + nx * 30;
     }
   });
 
-  const release = () => { dragging = false; };
+  const release = () => { dragging = false; kick(); };
   cardEl.addEventListener("pointerup", release);
   cardEl.addEventListener("pointercancel", release);
   cardEl.addEventListener("contextmenu", e => e.preventDefault());
+  window.addEventListener("resize", cacheRect);
 
   /* --- close with exit animation --- */
-  let closing = false;
   const close = () => {
     if (closing) return;
     closing = true;
-    const ov = document.getElementById("holoOv");
-    ov?.classList.add("closing");
+    document.getElementById("holoOv")?.classList.add("closing");
     setTimeout(() => {
-      if (holoRAF) cancelAnimationFrame(holoRAF), holoRAF = null;
+      if (rafOn) cancelAnimationFrame(holoRAF);
+      rafOn = false; holoRAF = null;
+      window.removeEventListener("resize", cacheRect);
       document.removeEventListener("keydown", onKey);
       root.innerHTML = "";
     }, 240);
@@ -116,6 +156,4 @@ function openHologram(card) {
   document.getElementById("holoOv").addEventListener("click", e => {
     if (e.target.id === "holoOv") close();
   });
-
-  loop();
 }
