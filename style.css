@@ -8,13 +8,12 @@
 @property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;height:100%}
-html{background:#07070d}
+html,body{margin:0;padding:0}
 body{
   background:#07070d;color:var(--ink);
   font-family:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
-  font-size:15px;line-height:1.45;overflow:hidden;
-  overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;
+  font-size:15px;line-height:1.45;overflow-x:hidden;
+  overscroll-behavior-y:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;
 }
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0;touch-action:manipulation}
 button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:8px}
@@ -34,9 +33,11 @@ svg{display:block}
 @keyframes orbDrift{from{transform:translate(0,0) scale(1)}to{transform:translate(6vmax,4vmax) scale(1.15)}}
 
 /* ---------- layout ---------- */
-.shell{max-width:560px;margin:0 auto;padding:0 14px;position:relative;z-index:1;
-  height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none}
-.view{padding:22px 2px calc(132px + env(safe-area-inset-bottom,0px));min-height:100%}
+.shell{max-width:560px;margin:0 auto;padding:0 14px;position:relative;z-index:1}
+.view{padding:22px 2px calc(132px + env(safe-area-inset-bottom,0px));
+  /* fill the screen on short tabs (Cards, Owe) so there is no scrollable slack
+     to get stuck in — that slack is what pushed the page up in installed mode */
+  min-height:100vh;min-height:100dvh}
 .page{will-change:transform}
 
 .page-head{margin:6px 2px 18px}

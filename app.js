@@ -724,8 +724,7 @@ document.addEventListener("click", async e => {
     case "tab":
       tab = el.dataset.tab; deckFlipped = false;
       /* start every tab at the very top — before the new (often shorter) page is
-         rendered, so the browser can't clamp a stale scroll offset mid-swap */
-      document.querySelector(".shell").scrollTop = 0;
+         rendered, so a stale offset can't survive the swap and push it up */
       window.scrollTo(0, 0);
       render(true);
       break;
