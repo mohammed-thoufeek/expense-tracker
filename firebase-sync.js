@@ -252,6 +252,7 @@ function chooseDialog(title, message, leftLabel, rightLabel) {
 /* ---------- state adoption (mutates the shared state object in place) ---------- */
 function adoptState(d) {
   if (!d || typeof d !== "object") return;
+  const curCardId = state.cards[deckIndex] && state.cards[deckIndex].id;   // keep the deck where it was
   if (typeof d.total === "number") state.total = d.total;
   if (typeof d.saved === "number") state.saved = d.saved;
   state.spends = Array.isArray(d.spends) ? d.spends : [];
@@ -267,7 +268,7 @@ function adoptState(d) {
     : state.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
   state.spendPaid = clamp(state.spendPaid, 0, state.spends.reduce((a, sp) => a + (sp.amount || 0), 0));
   normalizeSpendOrder(state.spends);
-  deckIndex = 0;
+  deckIndex = Math.max(0, state.cards.findIndex(c => c.id === curCardId));
   deckFlipped = false;
   render();
 }
@@ -279,8 +280,8 @@ function backupLocal() {
 /* ---------- cloud read/write ---------- */
 async function pushState(ref) {
   const json = JSON.stringify(state);
+  lastPushed = json;              // mark BEFORE writing: Firestore echoes local writes first
   await ref.set({ data: json, savedAt: Date.now(), v: 1 });
-  lastPushed = json;
 }
 
 function cloudQueuePush() {
@@ -312,6 +313,7 @@ function startSnapshot(ref) {
   stopSnapshot();
   snapUnsub = ref.onSnapshot(sn => {
     if (!sn.exists) return;
+    if (sn.metadata.hasPendingWrites) return;   // our own local write echoing back — ignore
     const raw = sn.data().data || "{}";
     if (raw === lastPushed) return;          // our own write coming back
     let d = null;

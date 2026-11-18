@@ -604,6 +604,7 @@ function formLast4(id) {
 function formMonthSpend(id) {
   const c = state.cards.find(x => x.id === id);
   if (!c) return;
+  const fromMonth = !!modalRoot.querySelector(".m-total");   // opened from the upcoming-bill modal
   openForm(`Add to upcoming bill \u2014 ${c.name}`, [
     { name: "name", label: "Name (optional)", placeholder: "e.g. Swiggy dinner" },
     { name: "amount", label: "Amount", type: "number", step: "0.01", required: true, placeholder: "e.g. 450" },
@@ -615,6 +616,7 @@ function formMonthSpend(id) {
     flashId = c.id;
     save(); render(); close();
     toast(`${fmt(amount)} added to ${c.name} \u00B7 upcoming bill`);
+    if (fromMonth) openMonthModal(id);   // stay in the list you were adding to
   });
 }
 
@@ -663,7 +665,7 @@ function formSetUpcoming(id) {
   if (!c) return;
   openForm(`Set upcoming bill \u2014 ${c.name}`, [
     { name: "amount", label: "Upcoming bill amount", type: "number", step: "0.01", required: false,
-      placeholder: "e.g. 8,000 \u2014 leave empty to clear" },
+      value: cardMonth(c), placeholder: "e.g. 8,000 \u2014 leave empty to clear" },
   ], "Set", (d, close) => {
     const amount = d.amount === "" ? 0 : parseAmount(d.amount);
     if (isNaN(amount)) return alert("Enter a valid amount");
@@ -675,7 +677,6 @@ function formSetUpcoming(id) {
     flashId = c.id;
     save(); render(); close();
     toast(`Upcoming bill set to ${fmt(amount)}`);
-    if (tab === "cards") openMonthModal(id);
   });
 }
 
