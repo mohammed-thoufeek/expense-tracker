@@ -721,7 +721,14 @@ document.addEventListener("click", async e => {
   if (!el) return;
   const id = el.dataset.id;
   switch (el.dataset.action) {
-    case "tab": tab = el.dataset.tab; deckFlipped = false; render(true); window.scrollTo({ top: 0, behavior: "smooth" }); break;
+    case "tab":
+      tab = el.dataset.tab; deckFlipped = false;
+      /* start every tab at the very top — before the new (often shorter) page is
+         rendered, so the browser can't clamp a stale scroll offset mid-swap */
+      document.querySelector(".shell").scrollTop = 0;
+      window.scrollTo(0, 0);
+      render(true);
+      break;
     case "dot": deckIndex = +el.dataset.i; deckFlipped = false; render(); break;
     case "edit-saved": formSaved(); break;
     case "add-spend": formSpend(); break;
