@@ -104,6 +104,20 @@ svg{display:block}
 .lg-total strong{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px;
   background:linear-gradient(120deg,#fde68a,#fbbf24 60%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lg-total.neg strong{background:linear-gradient(120deg,#fda4af,#fb7185);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lg-total.settled strong{background:linear-gradient(120deg,#6ee7b7,#34d399 60%,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* single Paid box in the Spends ledger */
+.lg-input{display:inline-flex;align-items:center;gap:3px;flex:none;padding:5px 9px;border-radius:10px;
+  border:1px solid var(--line);background:rgba(255,255,255,.04);transition:border-color .2s,background .2s,box-shadow .2s}
+.lg-input:focus-within{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.07);
+  box-shadow:0 0 0 3px rgba(52,211,153,.1)}
+.lg-input>span{font-size:12px;font-weight:700;color:#6f6f8a}
+.lg-input input{width:86px;padding:0;border:0;outline:0;background:transparent;text-align:right;
+  font-family:inherit;font-size:15.5px;font-weight:800;font-variant-numeric:tabular-nums;color:#34d399;
+  -moz-appearance:textfield}
+.lg-input input::-webkit-outer-spin-button,
+.lg-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.lg-input input::placeholder{color:#4c4c66;font-weight:700}
 
 /* ---------- budget bar ---------- */
 .budget-bar{display:flex;height:7px;border-radius:99px;overflow:hidden;margin-top:14px;

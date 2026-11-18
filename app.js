@@ -9,12 +9,13 @@ function seed() {
     total: 60000,
     saved: 12500,
     spends: [
-      { id: uid(), name: "Groceries - BigBasket", amount: 2450, status: "pending", cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
-      { id: uid(), name: "Netflix subscription",  amount: 649,  status: "pending", cardId: "",              created: Date.now() - 4 * 864e5 },
-      { id: uid(), name: "Petrol",                amount: 1500, status: "pending", cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
-      { id: uid(), name: "Movie tickets - PVR",   amount: 720,  status: "pending", cardId: "card-bms",      created: Date.now() - 2 * 864e5 },
-      { id: uid(), name: "Zomato order",          amount: 385,  status: "pending", cardId: "",              created: Date.now() - 864e5 },
+      { id: uid(), name: "Groceries - BigBasket", amount: 2450, cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
+      { id: uid(), name: "Netflix subscription",  amount: 649,  cardId: "",              created: Date.now() - 4 * 864e5 },
+      { id: uid(), name: "Petrol",                amount: 1500, cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
+      { id: uid(), name: "Movie tickets - PVR",   amount: 720,  cardId: "card-bms",      created: Date.now() - 2 * 864e5 },
+      { id: uid(), name: "Zomato order",          amount: 385,  cardId: "",              created: Date.now() - 864e5 },
     ],
+    spendPaid: 0,
     cards: [
       { id: "card-slice",    name: "Slice Credit card",               amount: 0,       paidAmt: 0, art: "slice",         last4: "4821", img: null },
       { id: "card-flipkart", name: "Flipkart Axis Bank Credit Card",  amount: 1302,    paidAmt: 0, art: "flipkart-axis", last4: "7957", img: null },
@@ -39,14 +40,20 @@ function loadState() {
       if (typeof c.paidAmt !== "number") c.paidAmt = 0;
       if (!Array.isArray(c.monthItems)) c.monthItems = [];
     });
-    // every spend is pending — statuses are fixed, not editable
-    if (Array.isArray(s.spends)) s.spends.forEach(sp => { sp.status = "pending"; });
+    // migration: one shared "Paid" amount for the Spends tab
+    // (an earlier build tracked a paid amount on each spend — roll those into the total)
+    if (!Array.isArray(s.spends)) s.spends = [];
+    if (typeof s.spendPaid !== "number") {
+      s.spendPaid = s.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
+    }
+    s.spendPaid = clamp(s.spendPaid, 0, s.spends.reduce((a, sp) => a + (sp.amount || 0), 0));
     return s;
   } catch { return seed(); }
 }
 
 const state = loadState();
 const save = () => {
+  state.spendPaid = spendPaid();   // keep the single Paid amount within 0..total
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { console.warn("Save failed", e); }
   if (typeof cloudQueuePush === "function") cloudQueuePush();   // cloud sync (firebase-sync.js)
 };
@@ -54,10 +61,12 @@ let tab = "dashboard";
 let paidFlashId = null;   // card that was just marked as paid → green flash
 
 /* ---------- sums ---------- */
+/* Spends ledger: Total Spend − Paid = Pending (one shared Paid amount) */
+const spendTotal   = () => state.spends.reduce((a, s) => a + (s.amount || 0), 0);
+const spendPaid    = () => clamp(state.spendPaid || 0, 0, spendTotal());
+const spendPending = () => spendTotal() - spendPaid();
 function sums() {
-  const paid = state.spends.filter(s => s.status === "paid").reduce((a, s) => a + s.amount, 0);
-  const pending = state.spends.filter(s => s.status === "pending").reduce((a, s) => a + s.amount, 0);
-  return { paid, pending, total: state.total, saved: state.saved };
+  return { paid: spendPaid(), pending: spendPending(), total: spendTotal(), saved: state.saved };
 }
 /* card-based dashboard logic:
    Total  = every rupee that ever came due on the cards (current dues + marked-as-paid)
@@ -202,13 +211,29 @@ const VIEWS = {
   },
 
   spends() {
-    const { paid, pending } = sums();
+    const total = spendTotal(), paid = spendPaid(), pending = spendPending();
     return `<div class="page">
       <header class="page-head"><h1>Spends</h1><p>Every expense, one by one</p></header>
 
-      <section class="panel total-hero">
-        <span>Total spent</span>
-        <strong data-num="${paid + pending}" data-key="totalSpent">${fmt(paid + pending)}</strong>
+      <section class="panel">
+        <div class="ledger">
+          ${lgRow("", "Total Spend", fmt(total), total, "spendTotal")}
+          <div class="lg-row">
+            <span class="lg-op">&minus;</span>
+            <span class="lg-lbl">Paid</span>
+            <label class="lg-input">
+              <span>&#8377;</span>
+              <input type="number" data-input="spend-paid" min="0" step="0.01" inputmode="decimal"
+                value="${paid ? paid : ""}" placeholder="0.00" aria-label="Amount paid">
+            </label>
+          </div>
+          <div class="lg-total${pending > 0 ? "" : " settled"}">
+            <span class="lg-op">=</span>
+            <span class="lg-lbl">Pending</span>
+            <strong data-num="${pending}" data-key="spendPending">${fmt(pending)}</strong>
+          </div>
+        </div>
+        <p class="note">Enter how much you've paid &middot; Total Spend &minus; Paid = Pending</p>
       </section>
 
       <section class="panel">
@@ -507,7 +532,7 @@ function formSpend(id) {
       flashId = editing.id;
       save(); render(); toast("Spend updated"); close();
     } else {
-      const s = { id: uid(), name: d.name.trim(), amount, status: "pending", cardId: "", created: Date.now() };
+      const s = { id: uid(), name: d.name.trim(), amount, cardId: "", created: Date.now() };
       state.spends.push(s);
       flashId = s.id;
       save(); render(); toast("Spend added"); close();
@@ -764,6 +789,38 @@ document.addEventListener("keydown", e => {
   if (e.key !== "Enter" && e.key !== " ") return;
   const el = e.target.closest('[data-action="holo"]');
   if (el) { e.preventDefault(); const card = state.cards.find(c => c.id === el.dataset.id); if (card) openHologram(card); }
+});
+
+/* ---------- single Paid box on the Spends tab ---------- */
+function syncSpendPaidUI() {
+  const pending = spendPending();
+  const el = document.querySelector('[data-key="spendPending"]');
+  if (!el) return;
+  el.dataset.num = pending;
+  el.textContent = fmt(pending);
+  el.closest(".lg-total")?.classList.toggle("settled", pending <= 0);
+  lastNums.spendPending = pending;
+}
+
+/* live update while typing — no re-render, so the input keeps focus */
+document.addEventListener("input", e => {
+  const el = e.target.closest('[data-input="spend-paid"]');
+  if (!el) return;
+  const v = el.value === "" ? 0 : parseAmount(el.value);
+  state.spendPaid = isNaN(v) ? 0 : Math.max(0, v);
+  syncSpendPaidUI();
+});
+
+/* commit on blur / Enter: clamp to the total and persist */
+document.addEventListener("change", e => {
+  const el = e.target.closest('[data-input="spend-paid"]');
+  if (!el) return;
+  const v = el.value === "" ? 0 : parseAmount(el.value);
+  state.spendPaid = isNaN(v) ? 0 : Math.max(0, v);
+  state.spendPaid = spendPaid();
+  el.value = state.spendPaid || "";
+  syncSpendPaidUI();
+  save();
 });
 
 /* ---------- boot ---------- */

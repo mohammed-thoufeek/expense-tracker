@@ -261,7 +261,11 @@ function adoptState(d) {
     if (typeof c.paidAmt !== "number") c.paidAmt = 0;
     if (!Array.isArray(c.monthItems)) c.monthItems = [];
   });
-  state.spends.forEach(sp => { sp.status = "pending"; });   // spends are always pending
+  // one shared Paid amount for the Spends tab (older builds tracked it per spend)
+  state.spendPaid = typeof d.spendPaid === "number"
+    ? d.spendPaid
+    : state.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
+  state.spendPaid = clamp(state.spendPaid, 0, state.spends.reduce((a, sp) => a + (sp.amount || 0), 0));
   deckIndex = 0;
   deckFlipped = false;
   render();

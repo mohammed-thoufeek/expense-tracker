@@ -15,6 +15,7 @@ function countUp(el) {
   const dur = 900, t0 = performance.now();
   const ease = t => 1 - Math.pow(2, -10 * t);
   const step = now => {
+    if (Number(el.dataset.num) !== target) return;   // value was updated live — stop this animation
     const p = Math.min(1, (now - t0) / dur);
     el.textContent = fmt(from + (target - from) * ease(p));
     if (p < 1) requestAnimationFrame(step); else el.textContent = fmt(target);
