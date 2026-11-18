@@ -42,6 +42,7 @@ const ICON = {
   check:  svgWrap('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   undo:   svgWrap('<path d="M8 5L4 9l4 4"/><path d="M4 9h10.5a5.5 5.5 0 015.5 5.5V19"/>'),
   sparkle: svgWrap('<path d="M12 3l2 5.6 5.5 2.4-5.5 2.4L12 19l-2-5.6L4.5 11l5.5-2.4z"/>'),
+  grip:   svgWrap('<path d="M9 6.5h.01M15 6.5h.01M9 12h.01M15 12h.01M9 17.5h.01M15 17.5h.01"/>'),
 };
 
 const CARDHOLDER = "MOHAMMED";

@@ -9,11 +9,11 @@ function seed() {
     total: 60000,
     saved: 12500,
     spends: [
-      { id: uid(), name: "Groceries - BigBasket", amount: 2450, cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
-      { id: uid(), name: "Netflix subscription",  amount: 649,  cardId: "",              created: Date.now() - 4 * 864e5 },
-      { id: uid(), name: "Petrol",                amount: 1500, cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
-      { id: uid(), name: "Movie tickets - PVR",   amount: 720,  cardId: "card-bms",      created: Date.now() - 2 * 864e5 },
-      { id: uid(), name: "Zomato order",          amount: 385,  cardId: "",              created: Date.now() - 864e5 },
+      { id: uid(), name: "Groceries - BigBasket", amount: 2450, order: 4, cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
+      { id: uid(), name: "Netflix subscription",  amount: 649,  order: 3, cardId: "",              created: Date.now() - 4 * 864e5 },
+      { id: uid(), name: "Petrol",                amount: 1500, order: 2, cardId: "card-neo",      created: Date.now() - 3 * 864e5 },
+      { id: uid(), name: "Movie tickets - PVR",   amount: 720,  order: 1, cardId: "card-bms",      created: Date.now() - 2 * 864e5 },
+      { id: uid(), name: "Zomato order",          amount: 385,  order: 0, cardId: "",              created: Date.now() - 864e5 },
     ],
     spendPaid: 0,
     cards: [
@@ -47,6 +47,7 @@ function loadState() {
       s.spendPaid = s.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
     }
     s.spendPaid = clamp(s.spendPaid, 0, s.spends.reduce((a, sp) => a + (sp.amount || 0), 0));
+    normalizeSpendOrder(s.spends);
     return s;
   } catch { return seed(); }
 }
@@ -67,6 +68,18 @@ const spendPaid    = () => clamp(state.spendPaid || 0, 0, spendTotal());
 const spendPending = () => spendTotal() - spendPaid();
 function sums() {
   return { paid: spendPaid(), pending: spendPending(), total: spendTotal(), saved: state.saved };
+}
+
+/* ---------- spend order (drag to reorder) ---------- */
+const bySpendOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || b.created - a.created;
+const orderedSpends = () => [...state.spends].sort(bySpendOrder);
+function normalizeSpendOrder(list) {
+  if (!Array.isArray(list)) return;
+  const missing = list.filter(s => typeof s.order !== "number");
+  if (!missing.length) return;
+  const max = list.reduce((m, s) => typeof s.order === "number" && s.order > m ? s.order : m, -1);
+  missing.sort((a, b) => (b.created || 0) - (a.created || 0))
+    .forEach((s, i) => { s.order = max + 1 + i; });
 }
 /* card-based dashboard logic:
    Total  = every rupee that ever came due on the cards (current dues + marked-as-paid)
@@ -93,9 +106,10 @@ function undoCard(id) {
 /* ---------- row builders ---------- */
 function spendRows(spends, { icons = false, plain = false } = {}) {
   if (!spends.length) return `<div class="empty">No spends yet \u2014 add your first one</div>`;
-  const sorted = [...spends].sort((a, b) => b.created - a.created);
+  const sorted = [...spends].sort(bySpendOrder);
   return sorted.map((s, i) => `
     <div class="row${flashCls(s.id)}" style="--i:${i}">
+      ${icons ? `<button type="button" class="drag-handle" data-drag="spend" data-id="${s.id}" aria-label="Drag to reorder" title="Drag to reorder">${ICON.grip}</button>` : ""}
       <div class="row-main">
         <span class="row-name">${esc(s.name)}</span>
       </div>
@@ -532,7 +546,8 @@ function formSpend(id) {
       flashId = editing.id;
       save(); render(); toast("Spend updated"); close();
     } else {
-      const s = { id: uid(), name: d.name.trim(), amount, cardId: "", created: Date.now() };
+      const minOrder = state.spends.reduce((m, sp) => Math.min(m, typeof sp.order === "number" ? sp.order : 0), 0);
+      const s = { id: uid(), name: d.name.trim(), amount, order: state.spends.length ? minOrder - 1 : 0, cardId: "", created: Date.now() };
       state.spends.push(s);
       flashId = s.id;
       save(); render(); toast("Spend added"); close();
@@ -821,6 +836,103 @@ document.addEventListener("change", e => {
   el.value = state.spendPaid || "";
   syncSpendPaidUI();
   save();
+});
+
+/* ---------- drag to reorder spends ---------- */
+let spendDrag = null;
+
+function stopSpendDrag() {
+  if (!spendDrag) return;
+  const d = spendDrag;
+  spendDrag = null;
+  d.row.classList.remove("dragging");
+  d.row.style.transform = "";
+  d.container.classList.remove("reordering");
+  d.line.remove();
+  document.removeEventListener("pointermove", d.onMove);
+  document.removeEventListener("pointerup", d.onUp);
+  document.removeEventListener("pointercancel", d.onUp);
+}
+
+function beginSpendDrag(e, handle) {
+  if (spendDrag) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  const row = handle.closest(".row");
+  const container = row && row.closest(".rows");
+  if (!row || !container) return;
+  e.preventDefault();
+
+  const line = document.createElement("div");
+  line.className = "drop-line";
+  container.classList.add("reordering");
+  container.appendChild(line);
+  row.classList.add("dragging");
+
+  const d = spendDrag = {
+    id: handle.dataset.id, row, container, line,
+    startY: e.clientY, moved: false, dropIndex: 0,
+  };
+  const cTop = container.getBoundingClientRect().top;
+  const others = () => [...container.querySelectorAll(".row")].filter(r => r !== row);
+
+  d.onMove = ev => {
+    if (spendDrag !== d) return;
+    const dy = ev.clientY - d.startY;
+    if (Math.abs(dy) > 4) d.moved = true;
+    row.style.transform = `translateY(${dy}px)`;
+
+    const list = others();
+    let idx = 0;
+    list.forEach(r => {
+      const b = r.getBoundingClientRect();
+      if (ev.clientY > b.top + b.height / 2) idx++;
+    });
+    d.dropIndex = idx;
+    const y = idx < list.length
+      ? list[idx].getBoundingClientRect().top - cTop
+      : list.length
+        ? list[list.length - 1].getBoundingClientRect().bottom - cTop
+        : row.getBoundingClientRect().bottom - cTop;
+    line.style.top = y + "px";
+  };
+
+  d.onUp = () => {
+    if (spendDrag !== d) return;
+    stopSpendDrag();
+    if (!d.moved) return;
+    const list = orderedSpends();
+    const from = list.findIndex(s => s.id === d.id);
+    if (from < 0) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(clamp(d.dropIndex, 0, list.length), 0, moved);
+    list.forEach((s, i) => { s.order = i; });
+    save(); render();
+    toast("Spend order updated");
+  };
+
+  document.addEventListener("pointermove", d.onMove);
+  document.addEventListener("pointerup", d.onUp);
+  document.addEventListener("pointercancel", d.onUp);
+}
+
+document.addEventListener("pointerdown", e => {
+  const handle = e.target.closest('[data-drag="spend"]');
+  if (handle) beginSpendDrag(e, handle);
+});
+
+/* arrow keys reorder when the handle is focused */
+document.addEventListener("keydown", e => {
+  const handle = e.target.closest('[data-drag="spend"]');
+  if (!handle || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault();
+  const list = orderedSpends();
+  const i = list.findIndex(s => s.id === handle.dataset.id);
+  const j = i + (e.key === "ArrowUp" ? -1 : 1);
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  list.forEach((s, k) => { s.order = k; });
+  save(); render();
+  document.querySelector(`[data-drag="spend"][data-id="${handle.dataset.id}"]`)?.focus();
 });
 
 /* ---------- boot ---------- */

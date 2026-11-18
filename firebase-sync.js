@@ -266,6 +266,7 @@ function adoptState(d) {
     ? d.spendPaid
     : state.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
   state.spendPaid = clamp(state.spendPaid, 0, state.spends.reduce((a, sp) => a + (sp.amount || 0), 0));
+  normalizeSpendOrder(state.spends);
   deckIndex = 0;
   deckFlipped = false;
   render();

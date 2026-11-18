@@ -241,6 +241,19 @@ svg{display:block}
 .rows .row:hover{background:rgba(255,255,255,.04)}
 .row-main{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
 .row-name{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drag-handle{width:24px;height:30px;flex:none;display:grid;place-items:center;color:#55556f;
+  border-radius:8px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;transition:color .2s,background .2s}
+.drag-handle:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.drag-handle:active{cursor:grabbing}
+.drag-handle .ic{width:16px;height:16px}
+.rows.reordering{position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.rows .row.dragging{position:relative;z-index:6;background:#171426;border-radius:14px;
+  box-shadow:0 16px 36px -12px rgba(0,0,0,.75),0 0 0 1px rgba(139,92,246,.4);
+  transition:none;will-change:transform;cursor:grabbing}
+.drop-line{position:absolute;left:8px;right:8px;height:2px;border-radius:2px;z-index:7;
+  background:linear-gradient(90deg,#8b5cf6,#22d3ee);box-shadow:0 0 10px rgba(139,92,246,.75);
+  pointer-events:none;transition:top .12s ease}
 .amt{font-size:14.5px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
 .icon-btn{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#62627e;transition:color .2s,background .2s,transform .15s}
 .icon-btn:hover{background:rgba(255,255,255,.07);color:var(--ink)}
