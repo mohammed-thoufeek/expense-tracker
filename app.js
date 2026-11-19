@@ -8,6 +8,7 @@ function seed() {
   return {
     total: 60000,
     saved: 12500,
+    savedLater: 0,
     spends: [
       { id: uid(), name: "Groceries - BigBasket", amount: 2450, order: 4, cardId: "card-flipkart", created: Date.now() - 5 * 864e5 },
       { id: uid(), name: "Netflix subscription",  amount: 649,  order: 3, cardId: "",              created: Date.now() - 4 * 864e5 },
@@ -43,6 +44,9 @@ function loadState() {
     // migration: one shared "Paid" amount for the Spends tab
     // (an earlier build tracked a paid amount on each spend — roll those into the total)
     if (!Array.isArray(s.spends)) s.spends = [];
+    // migration: "Saved for Later" is its own pot, separate from Saved
+    if (typeof s.savedLater !== "number") s.savedLater = 0;
+    if (typeof s.saved !== "number") s.saved = 0;
     if (typeof s.spendPaid !== "number") {
       s.spendPaid = s.spends.reduce((a, sp) => a + Math.min(sp.paid || 0, sp.amount || 0), 0);
     }
@@ -191,6 +195,7 @@ const VIEWS = {
     const total = cardTotalEver(), paid = cardPaidTotal();
     const { saved, pending } = sums();
     const upcoming = monthTotalAll();
+    const savedLater = state.savedLater || 0;
     const rem = total - paid - saved - pending;
     return `<div class="page">
       <header class="page-head"><h1>Dashboard</h1><p>Your money at a glance</p></header>
@@ -212,10 +217,10 @@ const VIEWS = {
             <span class="aside-lbl"><i></i>Upcoming</span>
             <strong class="aside-amt"><span data-num="${upcoming}" data-key="upcoming">${fmt(upcoming)}</span></strong>
           </div>
-          <div class="aside-card sv">
-            <span class="aside-lbl"><i></i>Saved for Later</span>
-            <strong class="aside-amt"><span data-num="${saved}" data-key="savedAside">${fmt(saved)}</span></strong>
-          </div>
+          <button type="button" class="aside-card sv" data-action="edit-saved-later" aria-label="Edit Saved for Later">
+            <span class="aside-lbl"><i></i>Saved for Later<span class="aside-ed">${ICON.pencil}</span></span>
+            <strong class="aside-amt"><span data-num="${savedLater}" data-key="savedLater">${fmt(savedLater)}</span></strong>
+          </button>
         </div>
         ${budgetBar()}
       </section>
@@ -540,6 +545,16 @@ function formSaved() {
     });
 }
 
+function formSavedLater() {
+  openForm("Saved for Later",
+    [{ name: "v", label: "Amount set aside", type: "number", step: "0.01", value: state.savedLater || 0, required: true }],
+    "Save", (d, close) => {
+      const n = parseAmount(d.v);
+      if (isNaN(n)) return alert("Enter a valid amount");
+      state.savedLater = Math.max(0, n); save(); render(); toast("Saved for later updated"); close();
+    });
+}
+
 function formSpend(id) {
   const editing = state.spends.find(s => s.id === id);
   openForm(editing ? "Edit spend" : "Add spend", [
@@ -738,6 +753,7 @@ document.addEventListener("click", async e => {
       break;
     case "dot": deckIndex = +el.dataset.i; deckFlipped = false; render(); break;
     case "edit-saved": formSaved(); break;
+    case "edit-saved-later": formSavedLater(); break;
     case "add-spend": formSpend(); break;
     case "edit-spend": formSpend(id); break;
     case "del-spend": {
