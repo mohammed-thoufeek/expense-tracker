@@ -199,6 +199,7 @@ const VIEWS = {
         <div class="ledger">
           ${lgRow("", "Total", fmt(total), total, "total")}
           ${lgRow("&minus;", "Paid", fmt(paid), paid, "paid", "", "c-green")}
+          ${lgRow("&minus;", "Saved", fmt(saved), saved, "saved", "edit-saved", "c-violet")}
           ${lgRow("&minus;", "Pending", fmt(pending), pending, "pending", "", "c-amber")}
           <div class="lg-total ${rem < 0 ? "neg" : ""}">
             <span class="lg-op">=</span>
@@ -207,14 +208,14 @@ const VIEWS = {
           </div>
         </div>
         <div class="aside">
-          <div class="aside-card">
+          <div class="aside-card up">
             <span class="aside-lbl"><i></i>Upcoming</span>
             <strong class="aside-amt"><span data-num="${upcoming}" data-key="upcoming">${fmt(upcoming)}</span></strong>
           </div>
-          <button type="button" class="aside-card sv" data-action="edit-saved" aria-label="Edit Saved for Later">
-            <span class="aside-lbl"><i></i>Saved for Later<span class="aside-ed">${ICON.pencil}</span></span>
-            <strong class="aside-amt"><span class="aside-op">&minus;</span><span data-num="${saved}" data-key="saved">${fmt(saved)}</span></strong>
-          </button>
+          <div class="aside-card sv">
+            <span class="aside-lbl"><i></i>Saved for Later</span>
+            <strong class="aside-amt"><span data-num="${saved}" data-key="savedAside">${fmt(saved)}</span></strong>
+          </div>
         </div>
         ${budgetBar()}
       </section>

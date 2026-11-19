@@ -248,15 +248,9 @@ svg{display:block}
   box-shadow:0 0 8px rgba(34,211,238,.55)}
 .aside-amt{display:flex;align-items:baseline;gap:5px;font-size:16.5px;font-weight:800;
   font-variant-numeric:tabular-nums;letter-spacing:-.2px}
-.aside-op{font-size:14px;font-weight:800;color:#6f6f8a}
-.aside-card.sv{padding-right:11px;border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08);
-  cursor:pointer;transition:border-color .2s,background .2s,transform .15s}
+.aside-card.sv{border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)}
 .aside-card.sv .aside-lbl i{background:var(--violet);box-shadow:0 0 8px rgba(139,92,246,.6)}
 .aside-card.sv .aside-amt{color:#a78bfa}
-.aside-card.sv:hover{border-color:rgba(167,139,250,.5);background:rgba(139,92,246,.13)}
-.aside-card.sv:active{transform:scale(.985)}
-.aside-ed{margin-left:auto;display:grid;place-items:center;color:#7b7b96}
-.aside-ed .ic{width:11px;height:11px}
 
 /* ---------- rows ---------- */
 .rows .row{display:flex;align-items:center;gap:10px;padding:11px 10px;margin:0 -8px;
