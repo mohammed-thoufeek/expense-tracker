@@ -235,7 +235,26 @@ svg{display:block}
 .cloud-forgot:hover{color:var(--ink)}
 .confirm-icon.cloud-ic{background:rgba(139,92,246,.14);color:#a78bfa;
   box-shadow:inset 0 0 0 1px rgba(167,139,250,.4),0 10px 26px -10px rgba(139,92,246,.5)}
-.note{color:#71718f;font-size:11px;margin:10px 0 0}
+/* ---------- two info boxes under Remaining ---------- */
+.aside{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+.aside-card{display:flex;flex-direction:column;gap:6px;align-items:flex-start;width:100%;
+  padding:11px 13px 12px;border-radius:15px;border:1px solid var(--line);
+  background:var(--panel2);font:inherit;color:inherit;text-align:left;-webkit-appearance:none}
+.aside-lbl{display:flex;align-items:center;gap:6px;width:100%;font-size:9.5px;font-weight:800;
+  letter-spacing:.8px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.aside-lbl i{width:6px;height:6px;border-radius:99px;flex:none;background:var(--cyan);
+  box-shadow:0 0 8px rgba(34,211,238,.55)}
+.aside-amt{display:flex;align-items:baseline;gap:5px;font-size:16.5px;font-weight:800;
+  font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+.aside-op{font-size:14px;font-weight:800;color:#6f6f8a}
+.aside-card.sv{padding-right:11px;border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08);
+  cursor:pointer;transition:border-color .2s,background .2s,transform .15s}
+.aside-card.sv .aside-lbl i{background:var(--violet);box-shadow:0 0 8px rgba(139,92,246,.6)}
+.aside-card.sv .aside-amt{color:#a78bfa}
+.aside-card.sv:hover{border-color:rgba(167,139,250,.5);background:rgba(139,92,246,.13)}
+.aside-card.sv:active{transform:scale(.985)}
+.aside-ed{margin-left:auto;display:grid;place-items:center;color:#7b7b96}
+.aside-ed .ic{width:11px;height:11px}
 
 /* ---------- rows ---------- */
 .rows .row{display:flex;align-items:center;gap:10px;padding:11px 10px;margin:0 -8px;

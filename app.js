@@ -191,7 +191,7 @@ const VIEWS = {
     const total = cardTotalEver(), paid = cardPaidTotal();
     const { saved, pending } = sums();
     const upcoming = monthTotalAll();
-    const rem = total - paid - upcoming - saved - pending;
+    const rem = total - paid - saved - pending;
     return `<div class="page">
       <header class="page-head"><h1>Dashboard</h1><p>Your money at a glance</p></header>
 
@@ -199,8 +199,6 @@ const VIEWS = {
         <div class="ledger">
           ${lgRow("", "Total", fmt(total), total, "total")}
           ${lgRow("&minus;", "Paid", fmt(paid), paid, "paid", "", "c-green")}
-          ${upcoming > 0 ? lgRow("&minus;", "Upcoming", fmt(upcoming), upcoming, "upcoming", "", "c-cyan") : ""}
-          ${lgRow("&minus;", "Saved", fmt(saved), saved, "saved", "edit-saved", "c-violet")}
           ${lgRow("&minus;", "Pending", fmt(pending), pending, "pending", "", "c-amber")}
           <div class="lg-total ${rem < 0 ? "neg" : ""}">
             <span class="lg-op">=</span>
@@ -208,8 +206,17 @@ const VIEWS = {
             <strong data-num="${rem}" data-key="rem">${fmt(rem)}</strong>
           </div>
         </div>
+        <div class="aside">
+          <div class="aside-card">
+            <span class="aside-lbl"><i></i>Upcoming</span>
+            <strong class="aside-amt"><span data-num="${upcoming}" data-key="upcoming">${fmt(upcoming)}</span></strong>
+          </div>
+          <button type="button" class="aside-card sv" data-action="edit-saved" aria-label="Edit Saved for Later">
+            <span class="aside-lbl"><i></i>Saved for Later<span class="aside-ed">${ICON.pencil}</span></span>
+            <strong class="aside-amt"><span class="aside-op">&minus;</span><span data-num="${saved}" data-key="saved">${fmt(saved)}</span></strong>
+          </button>
+        </div>
         ${budgetBar()}
-        <p class="note">Total &amp; Paid come from your cards &middot; Upcoming = swipes waiting for the next bill &middot; Remaining = Total &minus; Paid &minus; Upcoming &minus; Saved &minus; Pending. ${typeof dataNote === "function" ? dataNote() : "Data stays on this device."}</p>
       </section>
 
       <section class="panel">
